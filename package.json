@@ -1,16 +1,16 @@
 {
-  "name": "testdata",
+  "name": "@diegofreitas/pgmock",
   "preferGlobal": true,
-  "bin": "./index.js",
-  "version": "1.0.0",
+  "bin":{ "testdata" : "./index.js" } ,
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Diego Lins de Freitas",
+  "license": "Apache 2",
   "dependencies": {
     "@octokit/rest": "^15.9.5",
     "chalk": "^2.4.1",
