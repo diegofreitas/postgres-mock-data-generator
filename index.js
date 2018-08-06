@@ -17,12 +17,35 @@ const Configstore = require('configstore');
 const pkg = require('./package.json');
 const conf = new Configstore(pkg.name);
 
+const { Client } = require('pg');
+var fs = require('fs');
+if (!fs.existsSync('db.json')) {
+    console.log(chalk.red("db config file db.json is missing"))
+    console.log("Example", "{ \nuser: 'postgres',\nhost: 'localhost',\ndatabase: 'mydb',\npassword: '12dsu2j',\nport: 5432\n}")
+    process.exit(1)
+} 
+
+
+const client = new Client({
+    user: 'postgres',
+    host: '10.60.70.59',
+    database: 'positivo-local',
+    password: 'fpf@1212',
+    port: 5433,
+})
+client.connect()
+
 clear();
 console.log(
     chalk.blue(
         figlet.textSync('TestData', { horizontalLayout: 'full' })
     )
 );
+
+program
+    .version('0.0.1')
+    .description('Test data generation made easy');
+
 
 var metadata = {}
 
@@ -50,56 +73,113 @@ function getTableList() {
     return tableList;
 }
 
-function inquireInputs(tableName) {
+async function inquireInputs(tableName) {
     tableMeta = metadata.get(tableName)
     columns = metadata.get(tableName).columns
     columnNames = columns.keys();
     let options = []
     for (let columnName of columnNames) {
+        const choicesValues = await getChoices(columns.get(columnName));
         options.push({
             type: getOptionType(columns.get(columnName)),
             name: columnName,
             message: `input for ${columnName}`,
-            choices: getChoices(columns.get(columnName))
+            choices: choicesValues
         })
     }
     return inquirer.prompt(options);
 
 }
 
-function getChoices(columnMetadata) {
-    return [];
+async function getChoices(columnMetadata) {
+    if (columns.get(columnMetadata.name).isForeignKey) {
+        refTableName = columns.get(columnMetadata.name).foreignKeyConstraints.array[0].referencedTable.fullName
+        refTable = metadata.get(refTableName)
+        descriptiveColumns1 = refTable.columns.array[0]
+        descriptiveColumns2 = refTable.columns.array[1]
+        descriptiveColumns3 = refTable.columns.array[2]
+        pkColumn = refTable.primaryKeyColumns.array[0];
+        const res = await client.query(`SELECT ${pkColumn.name} as value, concat(${descriptiveColumns1.name}, ${descriptiveColumns2.name}, ${descriptiveColumns3.name})  as name, ${descriptiveColumns2.name} as short  from ${refTableName}`);
+        return res.rows
+    } else {
+        return []
+    }
 }
 
 function getOptionType(columnMetadata) {
+    if (columnMetadata.isForeignKey) {
+        return 'list'
+    }
+
     return 'input';
+}
+
+function generateInserts(tableName, options, count) {
+    for (let i = 0; i < count; i++) {
+        let fields = []
+        let values = []
+        for (key in options) {
+            //insert
+            //sql
+            fields.push(key);
+            values.push(getValue(options[key], i))
+
+        }
+        console.log(`insert into ${tableName} (${fields})  values (${values})`)
+    }
+
 }
 
 
 function generateDataForTable(tableName, options) {
     verifyInputArray(options).then((count) => {
         inquireNumInserts(count).then((inserts) => {
-            for(let i = 0; i < inserts; i ++) {
-                for (key in options) {
-                    console.log(getValue(options[key], i))
+            generateInserts(tableName, options, inserts)
+            inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'sessionName',
+                    message: `Save this session as:`,
+                    validate: (value) => {
+                        if (value.length > 0) {
+                            return true;
+                        } else {
+                            return "You must provide a name!"
+                        }
+                    }
                 }
-            }
+            ]).then(result => {
+                session = {
+                    table: tableName,
+                    count: inserts,
+                    options: options
+                }
+                files.saveSession(result.sessionName, JSON.stringify(session), (error) => {
+                    console.log(error);
+                })
+            });
         })
     })
 
 }
 
-function getValue(value, i) {
-    if(value.indexOf('{{') > -1) {
-        return faker.fake(value);
+function getValue(value, i, columnName) {
+    let parsedValue = value;
+    if (value.indexOf('$') > -1) {
+        parsedValue = Number(value.replace('$', '')) + i
+    }
+    if (value.indexOf('{{') > -1) {
+        parsedValue = faker.fake(value);
     }
 
     const values = value.split(',');
-    if(values.length > 1) {
-        return values[i];
+    if (values.length > 1) {
+        parsedValue = values[i];
     }
-
-    return value;
+    if (isNaN(Number(parsedValue))) { //TODO verificar o tipo usando metadados
+        parsedValue = `'${parsedValue}'`
+    }
+    return parsedValue;
 }
 
 
@@ -113,8 +193,8 @@ function inquireNumInserts(opt) {
                     message: `The value for ${opt.columnName} is an array with length ${opt.count}. Would you like to insert ${opt.count} tuples in the table?`,
                     default: true
                 }
-            ]).then( result => {
-                if(result.useCount) {
+            ]).then(result => {
+                if (result.useCount) {
                     resolve(opt.count)
                 } else {
                     reject(`The column ${opt.columnName} has ${opt.count} elements, but you want to insert a different number of elements in the table.`)
@@ -128,7 +208,7 @@ function inquireNumInserts(opt) {
                     message: `How may items would you like to insert in the table?`,
                     default: 1
                 }
-            ]).then( result => {
+            ]).then(result => {
                 resolve(Number(result.count));
             });
         }
@@ -150,49 +230,66 @@ function verifyInputArray(options) {
                 break;
             }
         }
-        if(count === 0){
-            resolve({count:0});
+        if (count === 0) {
+            resolve({ count: 0 });
         } else {
-            resolve({count:count, columnName:columnName});
+            resolve({ count: count, columnName: columnName });
         }
-        
+
     })
 
 }
 
+program
+    .command('session <file>')
+    .alias('s')
+    .description('Load a session configuration.')
+    .action((file) => {
+        const session = files.loadSession(file);
+        generateInserts(session.table, session.options, session.count );
+    });
 
-pgStructure({ database: 'positivo-local', user: 'postgres', password: 'fpf@1212', host: '10.60.70.59', port: 5433 }, ['schood'])
-    .then((db) => {
-        // Basic
+program
+    .command('interactive')
+    .alias('i')
+    .description('Start interactive mode')
+    .action(() => {
+        pgStructure({ database: 'positivo-local', user: 'postgres', password: 'fpf@1212', host: '10.60.70.59', port: 5433 }, ['schood'])
+            .then((db) => {
+                // Basic
 
-        metadata = db;
-        // List of table names
+                metadata = db;
+                // List of table names
 
 
-        // Long chain example for:
-        // public schema -> cart table -> contact_id column -> foreign key constraints of contact_id.
-        //var constraints = db.get('schood.bracelet.trackable_id').foreignKeyConstraints;
-        //console.log(constraints);
-        //var sameName = db.schemas.get('schood').tables.get('bracelet').columns.get('trackable_id').foreignKeyConstraints;
-        //console.log(sameName);
-        // Many to many relation. Returns cart_line_item for cart --< cart_line_item >-- product
-        //var joinTable = [...db.get('schood.area_category').m2mRelations.values()];    // See JS Map  on https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Map
-        //console.log(joinTable[1].sourceTable.name)
-        //console.log(joinTable[1].joinTable.name)
-        //console.log(joinTable[1].targetTable.name)
-        selectTable().then((selectedTable) => {
-            console.log(chalk.green(`Selected table: ${selectedTable.table}`))
-            inquireInputs(selectedTable.table).then(options => {
-                generateDataForTable(selectedTable.table, options)
-            }).catch(error => {
-                console.log(chalk.red(error))
-            });
-        }).catch(error => {
-            console.log(chalk.red(error))
-        });
-    })
-    .catch(err => console.log(err.stack));
+                // Long chain example for:
+                // public schema -> cart table -> contact_id column -> foreign key constraints of contact_id.
+                //var constraints = db.get('schood.bracelet.trackable_id').foreignKeyConstraints;
+                //console.log(constraints);
+                //var sameName = db.schemas.get('schood').tables.get('bracelet').columns.get('trackable_id').foreignKeyConstraints;
+                //console.log(sameName);
+                // Many to many relation. Returns cart_line_item for cart --< cart_line_item >-- product
+                //var joinTable = [...db.get('schood.area_category').m2mRelations.values()];    // See JS Map  on https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Map
+                //console.log(joinTable[1].sourceTable.name)
+                //console.log(joinTable[1].joinTable.name)
+                //console.log(joinTable[1].targetTable.name)
+                selectTable().then((selectedTable) => {
+                    console.log(chalk.green(`Selected table: ${selectedTable.table}`))
+                    inquireInputs(selectedTable.table).then(options => {
+                        generateDataForTable(selectedTable.table, options)
+                    }).catch(error => {
+                        console.log(chalk.red(error))
+                    });
+                }).catch(error => {
+                    console.log(chalk.red(error))
+                });
+            })
+            .catch(err => console.log(err.stack));
 
+    });
+
+ program
+ .parse(process.argv)
 
 
 
