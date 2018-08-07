@@ -65,6 +65,7 @@ async function inquireInputs(tableName) {
     columns = metadata.get(tableName).columns
     columnNames = columns.keys();
     let options = []
+    
     for (let columnName of columnNames) {
         const choicesValues = await getChoices(columns.get(columnName));
         options.push({
