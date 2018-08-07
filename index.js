@@ -293,7 +293,7 @@ program
     }
 
     program
-    .version('0.0.3')
+    .version('0.0.4')
     .description('Test data generation made easy')
     .option('-u, --user <n>', 'Dababase user' )
     .option('-h, --host <h>', 'Host name' )
