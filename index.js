@@ -43,7 +43,7 @@ console.log(
 );
 
 program
-    .version('0.0.1')
+    .version('0.0.3')
     .description('Test data generation made easy');
 
 

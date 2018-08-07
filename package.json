@@ -1,8 +1,8 @@
 {
   "name": "@diegofreitas/pgmock",
   "preferGlobal": true,
-  "bin":{ "testdata" : "./index.js" } ,
-  "version": "0.0.1",
+  "bin":{ "pgmock" : "./index.js" } ,
+  "version": "0.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
