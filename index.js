@@ -19,21 +19,13 @@ const conf = new Configstore(pkg.name);
 
 const { Client } = require('pg');
 var fs = require('fs');
-if (!fs.existsSync('db.json')) {
-    console.log(chalk.red("db config file db.json is missing"))
-    console.log("Example", "{ \nuser: 'postgres',\nhost: 'localhost',\ndatabase: 'mydb',\npassword: '12dsu2j',\nport: 5432\n}")
-    process.exit(1)
-} 
+// if (!fs.existsSync('./db.json')) {
+//     console.log(chalk.red("db config file db.json is missing"))
+//     console.log("Example", "{ \nuser: 'postgres',\nhost: 'localhost',\ndatabase: 'mydb',\npassword: '12dsu2j',\nport: 5432\n}")
+//     process.exit(1)
+// } 
 
-
-const client = new Client({
-    user: 'postgres',
-    host: '10.60.70.59',
-    database: 'positivo-local',
-    password: 'fpf@1212',
-    port: 5433,
-})
-client.connect()
+var client;
 
 clear();
 console.log(
@@ -41,11 +33,6 @@ console.log(
         figlet.textSync('TestData', { horizontalLayout: 'full' })
     )
 );
-
-program
-    .version('0.0.3')
-    .description('Test data generation made easy');
-
 
 var metadata = {}
 
@@ -245,6 +232,7 @@ program
     .alias('s')
     .description('Load a session configuration.')
     .action((file) => {
+        connect()
         const session = files.loadSession(file);
         generateInserts(session.table, session.options, session.count );
     });
@@ -254,8 +242,12 @@ program
     .alias('i')
     .description('Start interactive mode')
     .action(() => {
-        pgStructure({ database: 'positivo-local', user: 'postgres', password: 'fpf@1212', host: '10.60.70.59', port: 5433 }, ['schood'])
+        connect();
+        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, ['schood','schoolar'])
             .then((db) => {
+
+
+
                 // Basic
 
                 metadata = db;
@@ -288,10 +280,29 @@ program
 
     });
 
- program
- .parse(process.argv)
+    function connect() {
+        client = new Client({
+            user: program.user,
+            host: program.host,
+            database: program.database,
+            password: program.password,
+            port: program.port,
+        });
 
+        client.connect()
+    }
 
+    program
+    .version('0.0.3')
+    .description('Test data generation made easy')
+    .option('-u, --user <n>', 'Dababase user' )
+    .option('-h, --host <h>', 'Host name' )
+    .option('-d, --database <d>', 'Dababase name' )
+    .option('-s, --password <d>', 'Password' )
+    .option('-p, --port <p>', 'Port' )
+    .parse(process.argv);
+
+    
 
 /*
 
