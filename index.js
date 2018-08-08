@@ -65,14 +65,23 @@ async function inquireInputs(tableName) {
     columns = metadata.get(tableName).columns
     columnNames = columns.keys();
     let options = []
+
     for (let columnName of columnNames) {
+        console.log(chalk.green(`columnName: ${columnName} \n`));
         const choicesValues = await getChoices(columns.get(columnName));
-        options.push({
-            type: getOptionType(columns.get(columnName)),
-            name: columnName,
-            message: `input for ${columnName}`,
-            choices: choicesValues
-        })
+        console.log(chalk.green(`choices: ${choicesValues} \n`));
+        if(choicesValues<0){
+            console.log(chalk.green(`poorraa: ${choicesValues} \n`));
+            mainFunction(metadata);
+        }
+        else{
+            options.push({
+                type: getOptionType(columns.get(columnName)),
+                name: columnName,
+                message: `inputo forsss ${columnName}`,
+                choices: choicesValues
+            })
+        }
     }
     return inquirer.prompt(options);
 
@@ -86,8 +95,17 @@ async function getChoices(columnMetadata) {
         descriptiveColumns2 = refTable.columns.array[1]
         descriptiveColumns3 = refTable.columns.array[2]
         pkColumn = refTable.primaryKeyColumns.array[0];
-        const res = await client.query(`SELECT ${pkColumn.name} as value, concat(${descriptiveColumns1.name}, ${descriptiveColumns2.name}, ${descriptiveColumns3.name})  as name, ${descriptiveColumns2.name} as short  from ${refTableName}`);
-        return res.rows
+        
+        const select = await client.query(`SELECT ${pkColumn.name} as value, concat(${descriptiveColumns1.name}, ${descriptiveColumns2.name}, ${descriptiveColumns3.name})  as name, ${descriptiveColumns2.name} as short  from ${refTableName}`);
+        // console.log(chalk.green(`columnNameddddd: ${Object.getOwnPropertyNames(res.rows[0].value) } \n`));
+        console.log(chalk.green(`columnNameddddd: ${select.rowCount} \n`));
+        if(select.rowCount>0){
+            return select.rows;
+        }  
+        else{
+            return [-1];
+        } 
+
     } else {
         return []
     }
@@ -227,6 +245,19 @@ function verifyInputArray(options) {
 
 }
 
+function mainFunction(){
+    selectTable().then((selectedTable) => {
+        console.log(chalk.green(`Selected table: ${selectedTable.table}`))
+        inquireInputs(selectedTable.table).then(options => {
+            generateDataForTable(selectedTable.table, options)
+        }).catch(error => {
+            console.log(chalk.red(error))
+        });
+    }).catch(error => {
+        console.log(chalk.red(error))
+    });
+}
+
 program
     .command('session <file>')
     .alias('s')
@@ -246,11 +277,11 @@ program
         pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, ['schood','schoolar'])
             .then((db) => {
 
-
+                metadata = db;
 
                 // Basic
 
-                metadata = db;
+                
                 // List of table names
 
 
@@ -265,16 +296,7 @@ program
                 //console.log(joinTable[1].sourceTable.name)
                 //console.log(joinTable[1].joinTable.name)
                 //console.log(joinTable[1].targetTable.name)
-                selectTable().then((selectedTable) => {
-                    console.log(chalk.green(`Selected table: ${selectedTable.table}`))
-                    inquireInputs(selectedTable.table).then(options => {
-                        generateDataForTable(selectedTable.table, options)
-                    }).catch(error => {
-                        console.log(chalk.red(error))
-                    });
-                }).catch(error => {
-                    console.log(chalk.red(error))
-                });
+                mainFunction(db);
             })
             .catch(err => console.log(err.stack));
 
