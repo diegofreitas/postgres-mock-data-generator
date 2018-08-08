@@ -1,7 +1,0 @@
-insert into schood.map (id,description,image_hash,school_id,date_time)  values (3,3,3,1152,);
-insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,2,4,2,'now()');
-insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,2,4,2,'now()');
-insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,2,4,2,'now()');
-insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,2,4,2,'now()');
-insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,2,4,2,'now()');
-insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,2,4,2,'now()');
