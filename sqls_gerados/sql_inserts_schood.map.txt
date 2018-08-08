@@ -1,0 +1,4 @@
+insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,1,1,1152,);
+insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,1,1,1152,);
+insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,1,1,1152,);
+insert into schood.map (id,description,image_hash,school_id,date_time)  values (1,1,1,1152,);
