@@ -19,6 +19,8 @@ const conf = new Configstore(pkg.name);
 
 const { Client } = require('pg');
 var fs = require('fs');
+
+var shell = require('shelljs');
 // if (!fs.existsSync('./db.json')) {
 //     console.log(chalk.red("db config file db.json is missing"))
 //     console.log("Example", "{ \nuser: 'postgres',\nhost: 'localhost',\ndatabase: 'mydb',\npassword: '12dsu2j',\nport: 5432\n}")
@@ -67,24 +69,27 @@ async function inquireInputs(tableName) {
     let options = []
 
     for (let columnName of columnNames) {
-        console.log(chalk.green(`columnName: ${columnName} \n`));
         const choicesValues = await getChoices(columns.get(columnName));
-        console.log(chalk.green(`choices: ${choicesValues} \n`));
         if(choicesValues<0){
-            console.log(chalk.green(`poorraa: ${choicesValues} \n`));
-            mainFunction(metadata);
+            console.log(chalk.green(`Existe o campo ${columnName} depedente que nao tem dados cadastrados, preencher tabela referente\n\n`));
+            options = [];
+            err = new Error();
+            mainFunction();
+            throw err;
         }
         else{
             options.push({
                 type: getOptionType(columns.get(columnName)),
                 name: columnName,
-                message: `inputo forsss ${columnName}`,
+                message: `input for ${columnName}`,
                 choices: choicesValues
             })
+            
         }
+        
     }
     return inquirer.prompt(options);
-
+   
 }
 
 async function getChoices(columnMetadata) {
@@ -97,8 +102,6 @@ async function getChoices(columnMetadata) {
         pkColumn = refTable.primaryKeyColumns.array[0];
         
         const select = await client.query(`SELECT ${pkColumn.name} as value, concat(${descriptiveColumns1.name}, ${descriptiveColumns2.name}, ${descriptiveColumns3.name})  as name, ${descriptiveColumns2.name} as short  from ${refTableName}`);
-        // console.log(chalk.green(`columnNameddddd: ${Object.getOwnPropertyNames(res.rows[0].value) } \n`));
-        console.log(chalk.green(`columnNameddddd: ${select.rowCount} \n`));
         if(select.rowCount>0){
             return select.rows;
         }  
@@ -131,6 +134,10 @@ function generateInserts(tableName, options, count) {
 
         }
         console.log(`insert into ${tableName} (${fields})  values (${values})`)
+        fs.appendFile(`sqls_gerados/sql_inserts_${tableName}.txt`, `insert into ${tableName} (${fields})  values (${values});\n`, (err) => {  
+            if (err) throw err;
+        });
+        
     }
 
 }
@@ -210,7 +217,7 @@ function inquireNumInserts(opt) {
                 {
                     type: 'input',
                     name: 'count',
-                    message: `How may items would you like to insert in the table?`,
+                    message: `How many items would you like to insert in the table?`,
                     default: 1
                 }
             ]).then(result => {
@@ -246,6 +253,8 @@ function verifyInputArray(options) {
 }
 
 function mainFunction(){
+
+    
     selectTable().then((selectedTable) => {
         console.log(chalk.green(`Selected table: ${selectedTable.table}`))
         inquireInputs(selectedTable.table).then(options => {
@@ -297,10 +306,15 @@ program
                 //console.log(joinTable[1].joinTable.name)
                 //console.log(joinTable[1].targetTable.name)
                 mainFunction(db);
+
+                shell.cat('sql_gerados/sql*.txt').to('final.txt');
+
             })
             .catch(err => console.log(err.stack));
 
     });
+
+
 
     function connect() {
         client = new Client({
