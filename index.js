@@ -27,6 +27,8 @@ var fs = require('fs');
 
 var client;
 
+var schemas = [];
+
 clear();
 console.log(
     chalk.blue(
@@ -76,7 +78,6 @@ async function inquireInputs(tableName) {
         })
     }
     return inquirer.prompt(options);
-
 }
 
 async function getChoices(columnMetadata) {
@@ -246,15 +247,10 @@ program
         connect();
         pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, ['schood','schoolar'])
             .then((db) => {
-
-
-
                 // Basic
-
-                metadata = db;
+                metadata = db;                
+                // inquirer.prompt(questions, inputSchema);
                 // List of table names
-
-
                 // Long chain example for:
                 // public schema -> cart table -> contact_id column -> foreign key constraints of contact_id.
                 //var constraints = db.get('schood.bracelet.trackable_id').foreignKeyConstraints;
@@ -276,8 +272,8 @@ program
                 }).catch(error => {
                     console.log(chalk.red(error))
                 });
-            })
-            .catch(err => console.log(err.stack));
+
+            }).catch(err => console.log(err.stack));
 
     });
 
@@ -287,10 +283,14 @@ program
             host: program.host,
             database: program.database,
             password: program.password,
-            port: program.port,
+            port: program.port
         });
 
         client.connect()
+    }
+
+    function getSchemas(values) {
+        schemas = values.split(',');
     }
 
     program
@@ -301,15 +301,10 @@ program
     .option('-d, --database <d>', 'Dababase name' )
     .option('-s, --password <d>', 'Password' )
     .option('-p, --port <p>', 'Port' )
+    .option('-l, --list <items>', 'Schemas', getSchemas)
     .parse(process.argv);
-
     
-
 /*
-
-
-
-
 program
     .version('0.0.1')
     .description('Test data generation made easy');
