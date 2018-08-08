@@ -1,7 +1,9 @@
 {
   "name": "@diegofreitas/pgmock",
   "preferGlobal": true,
-  "bin":{ "pgmock" : "./index.js" } ,
+  "bin": {
+    "pgmock": "./index.js"
+  },
   "version": "0.0.4",
   "description": "Test data generation made easy",
   "main": "index.js",
@@ -26,6 +28,7 @@
     "minimist": "^1.2.0",
     "pg": "^7.4.3",
     "pg-structure": "^4.1.3",
+    "shelljs": "^0.8.2",
     "simple-git": "^1.96.0",
     "touch": "^3.1.0"
   }
