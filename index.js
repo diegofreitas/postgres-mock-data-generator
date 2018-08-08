@@ -27,7 +27,7 @@ var fs = require('fs');
 
 var client;
 
-var schemas = [];
+const schemas = [];
 
 clear();
 console.log(
@@ -54,11 +54,13 @@ function selectTable() {
 }
 
 function getTableList() {
-    var tables = metadata.schemas.get('schood').tables;  // Map of Table objects.
     let tableList = [];
-    for (let table of tables.values()) {
-        tableList.push(table.fullName)
-    }
+    schemas.forEach(function(schema) {
+        var tables = metadata.schemas.get(schema).tables;  // Map of Table objects.
+        for (let table of tables.values()) {
+            tableList.push(table.fullName)
+        }
+    });
     return tableList;
 }
 
@@ -67,7 +69,6 @@ async function inquireInputs(tableName) {
     columns = metadata.get(tableName).columns
     columnNames = columns.keys();
     let options = []
-    
     for (let columnName of columnNames) {
         const choicesValues = await getChoices(columns.get(columnName));
         options.push({
@@ -78,6 +79,7 @@ async function inquireInputs(tableName) {
         })
     }
     return inquirer.prompt(options);
+
 }
 
 async function getChoices(columnMetadata) {
@@ -245,12 +247,17 @@ program
     .description('Start interactive mode')
     .action(() => {
         connect();
-        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, ['schood','schoolar'])
+        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, schemas)
             .then((db) => {
+
+
+
                 // Basic
-                metadata = db;                
-                // inquirer.prompt(questions, inputSchema);
+
+                metadata = db;
                 // List of table names
+
+
                 // Long chain example for:
                 // public schema -> cart table -> contact_id column -> foreign key constraints of contact_id.
                 //var constraints = db.get('schood.bracelet.trackable_id').foreignKeyConstraints;
@@ -272,8 +279,8 @@ program
                 }).catch(error => {
                     console.log(chalk.red(error))
                 });
-
-            }).catch(err => console.log(err.stack));
+            })
+            .catch(err => console.log(err.stack));
 
     });
 
@@ -283,18 +290,21 @@ program
             host: program.host,
             database: program.database,
             password: program.password,
-            port: program.port
+            port: program.port,
         });
 
         client.connect()
     }
 
     function getSchemas(values) {
-        schemas = values.split(',');
+        var list = values.split(',');
+        for(let l of list) {
+            schemas.push(l);
+        }
     }
 
     program
-    .version('0.0.3')
+    .version('0.0.4')
     .description('Test data generation made easy')
     .option('-u, --user <n>', 'Dababase user' )
     .option('-h, --host <h>', 'Host name' )
@@ -303,8 +313,14 @@ program
     .option('-p, --port <p>', 'Port' )
     .option('-l, --list <items>', 'Schemas', getSchemas)
     .parse(process.argv);
+
     
+
 /*
+
+
+
+
 program
     .version('0.0.1')
     .description('Test data generation made easy');
