@@ -27,9 +27,13 @@ readFilePreset = function (f) {
                     results.forEach((item) => {
                         entinty = entinty.replace(item, faker.fake(item));
                 })
-                chunk += `,${entinty}`;
+                if(i>0){
+                    chunk += `,${entinty}`;
+                }else{
+                    chunk += `${entinty}`;
+                }
             }
-            parsedFile = `${chunk}`;
+            parsedFile = `[${chunk}]`;
             fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', () => {
                 console.log('File saved');           
             });
