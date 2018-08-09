@@ -27,6 +27,8 @@ var fs = require('fs');
 
 var client;
 
+const schemas = [];
+
 clear();
 console.log(
     chalk.blue(
@@ -52,11 +54,13 @@ function selectTable() {
 }
 
 function getTableList() {
-    var tables = metadata.schemas.get('schood').tables;  // Map of Table objects.
     let tableList = [];
-    for (let table of tables.values()) {
-        tableList.push(table.fullName)
-    }
+    schemas.forEach(function(schema) {
+        var tables = metadata.schemas.get(schema).tables;  // Map of Table objects.
+        for (let table of tables.values()) {
+            tableList.push(table.fullName)
+        }
+    });
     return tableList;
 }
 
@@ -243,7 +247,7 @@ program
     .description('Start interactive mode')
     .action(() => {
         connect();
-        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, ['schood','schoolar'])
+        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, schemas)
             .then((db) => {
 
 
@@ -292,6 +296,13 @@ program
         client.connect()
     }
 
+    function getSchemas(values) {
+        var list = values.split(',');
+        for(let l of list) {
+            schemas.push(l);
+        }
+    }
+
     program
     .version('0.0.4')
     .description('Test data generation made easy')
@@ -300,6 +311,7 @@ program
     .option('-d, --database <d>', 'Dababase name' )
     .option('-s, --password <d>', 'Password' )
     .option('-p, --port <p>', 'Port' )
+    .option('-l, --list <items>', 'Schemas', getSchemas)
     .parse(process.argv);
 
     
