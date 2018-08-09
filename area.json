@@ -1,0 +1,16 @@
+{
+    "table": "schood.area",
+    "count": 1,
+    "options": {
+        "id": "",
+        "color": "",
+        "description": "",
+        "map_id": "1",
+        "x": "",
+        "y": "",
+        "width": "",
+        "height": "",
+        "school_id": "1105",
+        "date_time": ""
+    }
+}

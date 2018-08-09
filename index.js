@@ -27,6 +27,8 @@ var fs = require('fs');
 
 var client;
 
+const p_import = require('./p_preset')
+
 clear();
 console.log(
     chalk.blue(
@@ -37,7 +39,25 @@ console.log(
 var metadata = {}
 
 //run();
-
+function getModeList() {
+    mode = [
+        "1 - Interactive",
+        "2 - Preset File"
+    ]
+    return mode;
+}
+function homeQuestion() {
+    const questions = [
+        {
+            type: 'list',
+            name: 'table',
+            message: 'Select type DB populate',
+            choices: getModeList,
+            pageSize: 8
+        }
+    ];
+    return inquirer.prompt(questions);
+}
 function selectTable() {
     const questions = [
         {
@@ -234,7 +254,7 @@ program
     .action((file) => {
         connect()
         const session = files.loadSession(file);
-        generateInserts(session.table, session.options, session.count );
+        generateInserts(session.table, session.options, session.count);
     });
 
 program
@@ -243,7 +263,7 @@ program
     .description('Start interactive mode')
     .action(() => {
         connect();
-        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, ['schood','schoolar'])
+        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port }, ['schood', 'schoolar'])
             .then((db) => {
 
 
@@ -265,44 +285,66 @@ program
                 //console.log(joinTable[1].sourceTable.name)
                 //console.log(joinTable[1].joinTable.name)
                 //console.log(joinTable[1].targetTable.name)
-                selectTable().then((selectedTable) => {
-                    console.log(chalk.green(`Selected table: ${selectedTable.table}`))
-                    inquireInputs(selectedTable.table).then(options => {
-                        generateDataForTable(selectedTable.table, options)
-                    }).catch(error => {
-                        console.log(chalk.red(error))
+                homeQuestion()
+                    .then((data) => {
+                        if (data.table == "1 - Interactive") {
+
+                            selectTable().then((selectedTable) => {
+                                console.log(chalk.green(`Selected table: ${selectedTable.table}`))
+                                inquireInputs(selectedTable.table).then(options => {
+                                    generateDataForTable(selectedTable.table, options)
+                                }).catch(error => {
+                                    console.log(chalk.red(error))
+                                });
+                            }).catch(error => {
+                                console.log(chalk.red(error))
+                            });
+
+                        }else if (data.table == "2 - Preset File") {
+                            p_import.readFile('./p_preset/generator_settings/test.yml');
+                        }
+                    })
+                    .catch(erro => {
+
                     });
-                }).catch(error => {
-                    console.log(chalk.red(error))
-                });
+                // selectTable().then((selectedTable) => {
+                //     console.log(chalk.green(`Selected table: ${selectedTable.table}`))
+                //     inquireInputs(selectedTable.table).then(options => {
+                //         generateDataForTable(selectedTable.table, options)
+                //     }).catch(error => {
+                //         console.log(chalk.red(error))
+                //     });
+                // }).catch(error => {
+                //     console.log(chalk.red(error))
+                // });
             })
             .catch(err => console.log(err.stack));
 
     });
 
-    function connect() {
-        client = new Client({
-            user: program.user,
-            host: program.host,
-            database: program.database,
-            password: program.password,
-            port: program.port,
-        });
+function connect() {
+    client = new Client({
+        user: program.user,
+        host: program.host,
+        database: program.database,
+        password: program.password,
+        port: program.port,
+    });
 
-        client.connect()
-    }
+    client.connect()
+}
 
-    program
+program
     .version('0.0.4')
     .description('Test data generation made easy')
-    .option('-u, --user <n>', 'Dababase user' )
-    .option('-h, --host <h>', 'Host name' )
-    .option('-d, --database <d>', 'Dababase name' )
-    .option('-s, --password <d>', 'Password' )
-    .option('-p, --port <p>', 'Port' )
+    .option('-u, --user <n>', 'Dababase user')
+    .option('-h, --host <h>', 'Host name')
+    .option('-d, --database <d>', 'Dababase name')
+    .option('-s, --password <d>', 'Password')
+    .option('-p, --port <p>', 'Port')
     .parse(process.argv);
 
-    
+
 
 /*
 

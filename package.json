@@ -1,12 +1,15 @@
 {
   "name": "@diegofreitas/pgmock",
   "preferGlobal": true,
-  "bin":{ "pgmock" : "./index.js" } ,
+  "bin": {
+    "pgmock": "./index.js"
+  },
   "version": "0.0.4",
   "description": "Test data generation made easy",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 i"
   },
   "keywords": [],
   "author": "Diego Lins de Freitas",
