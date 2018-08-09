@@ -16,19 +16,19 @@ readFilePreset = function (f) {
     var parsedFile = '';
     fs.readFile(folderSettings + '/' + f + '.json', 'utf-8',
         (err, data) => {
-            
+            let entinty = JSON.stringify((JSON.parse(data)).entity);
             repeat = (JSON.parse(data)).repeat;
-            
+            console.log(entinty);
             let results;
             
-            results = data.match((/((\{{2}.+\}{2}))+/g));
+            results = entinty.match((/((\{{2}.+\}{2}))+/g));
             for(let i =0; i<repeat; i++){                    
                     results.forEach((item) => {
-                    data = data.replace(item, faker.fake(item));
+                        entinty = entinty.replace(item, faker.fake(item));
                 })
             }
-            parsedFile = (JSON.parse(data)).entity;
-            fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, JSON.stringify(parsedFile), 'utf8', () => {
+            parsedFile = entinty;
+            fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', () => {
                 console.log('File saved');           
             });
         })
