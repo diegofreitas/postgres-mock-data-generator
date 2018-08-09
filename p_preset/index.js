@@ -14,6 +14,7 @@ fileList = [];
 
 readFilePreset = function (f) {
     var parsedFile = '';
+    var chunk ='';
     fs.readFile(folderSettings + '/' + f + '.json', 'utf-8',
         (err, data) => {
             let entinty = JSON.stringify((JSON.parse(data)).entity);
@@ -26,8 +27,9 @@ readFilePreset = function (f) {
                     results.forEach((item) => {
                         entinty = entinty.replace(item, faker.fake(item));
                 })
+                chunk += `,${entinty}`;
             }
-            parsedFile = entinty;
+            parsedFile = `${chunk}`;
             fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', () => {
                 console.log('File saved');           
             });
