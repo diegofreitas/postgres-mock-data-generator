@@ -12,18 +12,23 @@ let folderSettings = __dirname;
 
 fileList = [];
 
-readFile = function (f) {
+readFilePreset = function (f) {
     var parsedFile = '';
-    console.log('>>>>',folderSettings);
     fs.readFile(folderSettings+'/'+f+'.json', 'utf-8',
         (err, data) => {
+            let results;
+            results = data.match((/((\{{2}.+\}{2}))+/g));
+            results.forEach((item)=>{
+                data = data.replace(item,faker.fake(item));
+            })
+            parsedFile = data;
             fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', ()=>{
                 console.log('File saved')
             });
         })
 }
 
-getFileList = function () {
+getFileListPreset = function () {
     folderSettings = folderSettings+'/generator_settings';
     fs.readdir(folderSettings, (err, files) => {
         files.forEach(file => {
@@ -49,8 +54,7 @@ function selectFile(list) {
 startProgramPreset = function(files) {
     homeScreen();
     selectFile(files).then((selectedFile) => {
-        console.log(selectedFile);
-        readFile(selectedFile.table);
+        readFilePreset(selectedFile.table);
         console.log(chalk.green(`Selected file: ${selectedFile.table}`))
     }).catch(error => {
         console.log(chalk.red(error))
@@ -67,5 +71,5 @@ homeScreen = function () {
     );
 }
  module.exports = {
-    getFileList: getFileList
+    getFileListPreset: getFileListPreset
 }

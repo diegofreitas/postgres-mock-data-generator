@@ -307,7 +307,7 @@ program
                             loadSession.getFileList();
                         }
                         else if (data.table == "3 - Preset File") {
-                            presetGenerate.getFileList();
+                            presetGenerate.getFileListPreset();
                         }
                     })
                     .catch(erro => {
