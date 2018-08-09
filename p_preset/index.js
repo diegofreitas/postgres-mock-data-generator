@@ -14,29 +14,35 @@ fileList = [];
 
 readFilePreset = function (f) {
     var parsedFile = '';
-    fs.readFile(folderSettings+'/'+f+'.json', 'utf-8',
+    fs.readFile(folderSettings + '/' + f + '.json', 'utf-8',
         (err, data) => {
+            
+            repeat = (JSON.parse(data)).repeat;
+            
             let results;
+            
             results = data.match((/((\{{2}.+\}{2}))+/g));
-            results.forEach((item)=>{
-                data = data.replace(item,faker.fake(item));
+
+            results.forEach((item) => {
+                data = data.replace(item, faker.fake(item));
             })
-            parsedFile = data;
-            fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', ()=>{
-                console.log('File saved')
+
+            parsedFile = (JSON.parse(data)).entity;
+            fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, JSON.stringify(parsedFile), 'utf8', () => {
+                console.log('File saved');           
             });
         })
 }
 
 getFileListPreset = function () {
-    folderSettings = folderSettings+'/generator_settings';
+    folderSettings = folderSettings + '/generator_settings';
     fs.readdir(folderSettings, (err, files) => {
         files.forEach(file => {
             fileList.push(file.replace('.json', ''))
-          
+
         });
     })
-    setTimeout(()=>startProgramPreset(fileList),100);
+    setTimeout(() => startProgramPreset(fileList), 100);
 }
 function selectFile(list) {
     const questions = [
@@ -51,7 +57,7 @@ function selectFile(list) {
     return inquirer.prompt(questions);
 }
 
-startProgramPreset = function(files) {
+startProgramPreset = function (files) {
     homeScreen();
     selectFile(files).then((selectedFile) => {
         readFilePreset(selectedFile.table);
@@ -63,13 +69,13 @@ startProgramPreset = function(files) {
 
 
 homeScreen = function () {
-        clear();
+    clear();
     console.log(
         chalk.blue(
             figlet.textSync('TestData', { horizontalLayout: 'full' })
         )
     );
 }
- module.exports = {
+module.exports = {
     getFileListPreset: getFileListPreset
 }
