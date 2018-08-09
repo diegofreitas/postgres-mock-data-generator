@@ -1,21 +1,25 @@
+
 const fs = require('fs');
 var program = require('commander');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const clear = require('clear');
 const figlet = require('figlet');
+
+var faker = require('faker');
 /* Settings Files Directory */
 let folderSettings = __dirname;
 
 fileList = [];
-printMessage = function () {
-    console.log('hello world');
-}
 
 readFile = function (f) {
-    fs.readFile(folderSettings+'/'+f+'.yml', 'utf-8',
+    var parsedFile = '';
+    console.log('>>>>',folderSettings);
+    fs.readFile(folderSettings+'/'+f+'.json', 'utf-8',
         (err, data) => {
-            console.log(data.replace((/((\{{2}.+\}{2}))+/g), 'asdsadas'))
+            fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', ()=>{
+                console.log('File saved')
+            });
         })
 }
 
@@ -23,11 +27,11 @@ getFileList = function () {
     folderSettings = folderSettings+'/generator_settings';
     fs.readdir(folderSettings, (err, files) => {
         files.forEach(file => {
-            fileList.push(file.replace('.yml', ''))
+            fileList.push(file.replace('.json', ''))
           
         });
     })
-    setTimeout(()=>startProgram(fileList),100);
+    setTimeout(()=>startProgramPreset(fileList),100);
 }
 function selectFile(list) {
     const questions = [
@@ -41,7 +45,8 @@ function selectFile(list) {
     ];
     return inquirer.prompt(questions);
 }
-startProgram = function(files) {
+
+startProgramPreset = function(files) {
     homeScreen();
     selectFile(files).then((selectedFile) => {
         console.log(selectedFile);
@@ -61,8 +66,6 @@ homeScreen = function () {
         )
     );
 }
-module.exports = {
-    printMessage: printMessage,
-    readFile: readFile,
-     getFileList: getFileList
+ module.exports = {
+    getFileList: getFileList
 }

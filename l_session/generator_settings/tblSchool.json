@@ -1,0 +1,17 @@
+{
+    "table": "schood.image",
+    "count": 100,
+    "options": {
+        "id": "1",
+        "str_cpf": "000000",
+        "str_first_name": "{{name.firstName}}",
+        "str_last_name": "{{name.lastName}}",
+        "str_nick_name": "{{name.firstName}}",
+        "dtm_birthday": "{{date.past}}",
+        "str_email": "{{internet.email}}",
+        "str_photo": "{{image.imageUrl}}",
+        "str_gender": "M",
+        "dtm_created": "{{date.recent}}",
+        "dtm_last_update": "{{date.recent}}"
+    }
+}

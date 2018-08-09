@@ -9,7 +9,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 i"
+    "start": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 i",
+    "pg-mock": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 i"
   },
   "keywords": [],
   "author": "Diego Lins de Freitas",

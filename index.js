@@ -27,7 +27,8 @@ var fs = require('fs');
 
 var client;
 
-const p_import = require('./p_preset')
+var presetGenerate = require('./p_preset');
+var loadSession = require('./l_session');
 
 clear();
 console.log(
@@ -42,7 +43,8 @@ var metadata = {}
 function getModeList() {
     mode = [
         "1 - Interactive",
-        "2 - Preset File"
+        "2 - Import Session",
+        "3 - Preset File"
     ]
     return mode;
 }
@@ -171,6 +173,7 @@ function generateDataForTable(tableName, options) {
 }
 
 function getValue(value, i, columnName) {
+    console.log(value);
     let parsedValue = value;
     if (value.indexOf('$') > -1) {
         parsedValue = Number(value.replace('$', '')) + i
@@ -300,8 +303,11 @@ program
                                 console.log(chalk.red(error))
                             });
 
-                        }else if (data.table == "2 - Preset File") {
-                            p_import.getFileList();
+                        }else if (data.table == "2 - Import Session") {
+                            loadSession.getFileList();
+                        }
+                        else if (data.table == "3 - Preset File") {
+                            presetGenerate.getFileList();
                         }
                     })
                     .catch(erro => {
