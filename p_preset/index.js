@@ -22,11 +22,11 @@ readFilePreset = function (f) {
             let results;
             
             results = data.match((/((\{{2}.+\}{2}))+/g));
-
-            results.forEach((item) => {
-                data = data.replace(item, faker.fake(item));
-            })
-
+            for(let i =0; i<repeat; i++){                    
+                    results.forEach((item) => {
+                    data = data.replace(item, faker.fake(item));
+                })
+            }
             parsedFile = (JSON.parse(data)).entity;
             fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, JSON.stringify(parsedFile), 'utf8', () => {
                 console.log('File saved');           
