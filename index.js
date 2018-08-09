@@ -301,7 +301,7 @@ program
                             });
 
                         }else if (data.table == "2 - Preset File") {
-                            p_import.readFile('./p_preset/generator_settings/test.yml');
+                            p_import.getFileList();
                         }
                     })
                     .catch(erro => {

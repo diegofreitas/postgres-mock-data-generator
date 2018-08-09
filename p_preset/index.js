@@ -13,11 +13,10 @@ printMessage = function () {
 }
 
 readFile = function (f) {
-    getFileList()
-    // fs.readFile(f, 'utf-8',
-    //     (err, data) => {
-    //         console.log(data.replace((/((\{{2}.+\}{2}))+/g), 'asdsadas'))
-    //     })
+    fs.readFile(folderSettings+'/'+f+'.yml', 'utf-8',
+        (err, data) => {
+            console.log(data.replace((/((\{{2}.+\}{2}))+/g), 'asdsadas'))
+        })
 }
 
 getFileList = function () {
@@ -28,7 +27,7 @@ getFileList = function () {
           
         });
     })
-    setTimeout(()=>startProgram(fileList),0);
+    setTimeout(()=>startProgram(fileList),100);
 }
 function selectFile(list) {
     const questions = [
@@ -46,6 +45,7 @@ startProgram = function(files) {
     homeScreen();
     selectFile(files).then((selectedFile) => {
         console.log(selectedFile);
+        readFile(selectedFile.table);
         console.log(chalk.green(`Selected file: ${selectedFile.table}`))
     }).catch(error => {
         console.log(chalk.red(error))
@@ -64,5 +64,5 @@ homeScreen = function () {
 module.exports = {
     printMessage: printMessage,
     readFile: readFile,
-    // getFileList: getFileList
+     getFileList: getFileList
 }
