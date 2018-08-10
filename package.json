@@ -9,7 +9,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 -l"
+    "start": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 -l",
+    "pg-mock:schood": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 -l schood i",
+    "pg-mock:schood-school": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 -l schood_school i",
+    "pg-mock:schoolar": "pgmock -u postgres -h localhost -d positivo-cloud -s fpf@1212 -p 5432 -l schoolar i"
   },
   "keywords": [],
   "author": "Diego Lins de Freitas",
