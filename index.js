@@ -29,7 +29,12 @@ var shell = require('shelljs');
 
 var client;
 
+
+var presetGenerate = require('./p_preset');
+var loadSession = require('./l_session');
+
 const schemas = [];
+
 
 clear();
 console.log(
@@ -41,7 +46,26 @@ console.log(
 var metadata = {}
 
 //run();
-
+function getModeList() {
+    mode = [
+        "1 - Interactive",
+        "2 - Import Session",
+        "3 - Generate json data file"
+    ]
+    return mode;
+}
+function homeQuestion() {
+    const questions = [
+        {
+            type: 'list',
+            name: 'table',
+            message: 'Select type DB populate',
+            choices: getModeList,
+            pageSize: 8
+        }
+    ];
+    return inquirer.prompt(questions);
+}
 function selectTable() {
     const questions = [
         {
@@ -180,6 +204,7 @@ function generateDataForTable(tableName, options) {
 }
 
 function getValue(value, i, columnName) {
+    console.log(value);
     let parsedValue = value;
     if (value.indexOf('$') > -1) {
         parsedValue = Number(value.replace('$', '')) + i
@@ -278,7 +303,7 @@ program
     .action((file) => {
         connect()
         const session = files.loadSession(file);
-        generateInserts(session.table, session.options, session.count );
+        generateInserts(session.table, session.options, session.count);
     });
 
 program
@@ -309,16 +334,43 @@ program
                 //console.log(joinTable[1].sourceTable.name)
                 //console.log(joinTable[1].joinTable.name)
                 //console.log(joinTable[1].targetTable.name)
-                mainFunction(db);
+
+                homeQuestion()
+                    .then((data) => {
+                        if (data.table == "1 - Interactive") {
+
+                            mainFunction(db);
+
+                        }else if (data.table == "2 - Import Session") {
+                            loadSession.getFileList();
+                        }
+                        else if (data.table == "3 - Generate json data file") {
+                            presetGenerate.getFileListPreset();
+                        }
+                    })
+                    .catch(erro => {
+
+                    });
+                // selectTable().then((selectedTable) => {
+                //     console.log(chalk.green(`Selected table: ${selectedTable.table}`))
+                //     inquireInputs(selectedTable.table).then(options => {
+                //         generateDataForTable(selectedTable.table, options)
+                //     }).catch(error => {
+                //         console.log(chalk.red(error))
+                //     });
+                // }).catch(error => {
+                //     console.log(chalk.red(error))
+                // });
+
+               
 
                 shell.cat('sql_gerados/sql*.txt').to('final.txt');
+
 
             })
             .catch(err => console.log(err.stack));
 
     });
-
-
 
     function connect() {
         client = new Client({
@@ -329,8 +381,8 @@ program
             port: program.port,
         });
 
-        client.connect()
-    }
+    client.connect()
+}
 
     function getSchemas(values) {
         var list = values.split(',');
@@ -350,7 +402,7 @@ program
     .option('-l, --list <items>', 'Schemas', getSchemas)
     .parse(process.argv);
 
-    
+
 
 /*
 
