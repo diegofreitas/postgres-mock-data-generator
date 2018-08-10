@@ -19,6 +19,8 @@ const conf = new Configstore(pkg.name);
 
 const { Client } = require('pg');
 var fs = require('fs');
+
+var shell = require('shelljs');
 // if (!fs.existsSync('./db.json')) {
 //     console.log(chalk.red("db config file db.json is missing"))
 //     console.log("Example", "{ \nuser: 'postgres',\nhost: 'localhost',\ndatabase: 'mydb',\npassword: '12dsu2j',\nport: 5432\n}")
@@ -27,8 +29,12 @@ var fs = require('fs');
 
 var client;
 
+
 var presetGenerate = require('./p_preset');
 var loadSession = require('./l_session');
+
+const schemas = [];
+
 
 clear();
 console.log(
@@ -74,11 +80,13 @@ function selectTable() {
 }
 
 function getTableList() {
-    var tables = metadata.schemas.get('schood').tables;  // Map of Table objects.
     let tableList = [];
-    for (let table of tables.values()) {
-        tableList.push(table.fullName)
-    }
+    schemas.forEach(function(schema) {
+        var tables = metadata.schemas.get(schema).tables;  // Map of Table objects.
+        for (let table of tables.values()) {
+            tableList.push(table.fullName)
+        }
+    });
     return tableList;
 }
 
@@ -87,17 +95,29 @@ async function inquireInputs(tableName) {
     columns = metadata.get(tableName).columns
     columnNames = columns.keys();
     let options = []
+
     for (let columnName of columnNames) {
         const choicesValues = await getChoices(columns.get(columnName));
-        options.push({
-            type: getOptionType(columns.get(columnName)),
-            name: columnName,
-            message: `input for ${columnName}`,
-            choices: choicesValues
-        })
+        if(choicesValues<0){
+            console.log(chalk.green(`Existe o campo ${columnName} depedente que nao tem dados cadastrados, preencher tabela referente\n\n`));
+            options = [];
+            err = new Error();
+            mainFunction();
+            throw err;
+        }
+        else{
+            options.push({
+                type: getOptionType(columns.get(columnName)),
+                name: columnName,
+                message: `input for ${columnName}`,
+                choices: choicesValues
+            })
+            
+        }
+        
     }
     return inquirer.prompt(options);
-
+   
 }
 
 async function getChoices(columnMetadata) {
@@ -108,8 +128,15 @@ async function getChoices(columnMetadata) {
         descriptiveColumns2 = refTable.columns.array[1]
         descriptiveColumns3 = refTable.columns.array[2]
         pkColumn = refTable.primaryKeyColumns.array[0];
-        const res = await client.query(`SELECT ${pkColumn.name} as value, concat(${descriptiveColumns1.name}, ${descriptiveColumns2.name}, ${descriptiveColumns3.name})  as name, ${descriptiveColumns2.name} as short  from ${refTableName}`);
-        return res.rows
+        
+        const select = await client.query(`SELECT ${pkColumn.name} as value, concat(${descriptiveColumns1.name}, ${descriptiveColumns2.name}, ${descriptiveColumns3.name})  as name, ${descriptiveColumns2.name} as short  from ${refTableName}`);
+        if(select.rowCount>0){
+            return select.rows;
+        }  
+        else{
+            return [-1];
+        } 
+
     } else {
         return []
     }
@@ -135,6 +162,10 @@ function generateInserts(tableName, options, count) {
 
         }
         console.log(`insert into ${tableName} (${fields})  values (${values})`)
+        fs.appendFile(`sqls_gerados/sql_inserts_${tableName}.txt`, `insert into ${tableName} (${fields})  values (${values});\n`, (err) => {  
+            if (err) throw err;
+        });
+        
     }
 
 }
@@ -215,7 +246,7 @@ function inquireNumInserts(opt) {
                 {
                     type: 'input',
                     name: 'count',
-                    message: `How may items would you like to insert in the table?`,
+                    message: `How many items would you like to insert in the table?`,
                     default: 1
                 }
             ]).then(result => {
@@ -250,6 +281,21 @@ function verifyInputArray(options) {
 
 }
 
+function mainFunction(){
+
+    
+    selectTable().then((selectedTable) => {
+        console.log(chalk.green(`Selected table: ${selectedTable.table}`))
+        inquireInputs(selectedTable.table).then(options => {
+            generateDataForTable(selectedTable.table, options)
+        }).catch(error => {
+            console.log(chalk.red(error))
+        });
+    }).catch(error => {
+        console.log(chalk.red(error))
+    });
+}
+
 program
     .command('session <file>')
     .alias('s')
@@ -266,14 +312,14 @@ program
     .description('Start interactive mode')
     .action(() => {
         connect();
-        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port }, ['schood', 'schoolar'])
+        pgStructure({ database: program.database, user: program.user, password: program.password, host: program.host, port: program.port}, schemas)
             .then((db) => {
 
-
+                metadata = db;
 
                 // Basic
 
-                metadata = db;
+                
                 // List of table names
 
 
@@ -288,20 +334,12 @@ program
                 //console.log(joinTable[1].sourceTable.name)
                 //console.log(joinTable[1].joinTable.name)
                 //console.log(joinTable[1].targetTable.name)
+
                 homeQuestion()
                     .then((data) => {
                         if (data.table == "1 - Interactive") {
 
-                            selectTable().then((selectedTable) => {
-                                console.log(chalk.green(`Selected table: ${selectedTable.table}`))
-                                inquireInputs(selectedTable.table).then(options => {
-                                    generateDataForTable(selectedTable.table, options)
-                                }).catch(error => {
-                                    console.log(chalk.red(error))
-                                });
-                            }).catch(error => {
-                                console.log(chalk.red(error))
-                            });
+                            mainFunction(db);
 
                         }else if (data.table == "2 - Import Session") {
                             loadSession.getFileList();
@@ -323,31 +361,45 @@ program
                 // }).catch(error => {
                 //     console.log(chalk.red(error))
                 // });
+
+               
+
+                shell.cat('sql_gerados/sql*.txt').to('final.txt');
+
+
             })
             .catch(err => console.log(err.stack));
 
     });
 
-function connect() {
-    client = new Client({
-        user: program.user,
-        host: program.host,
-        database: program.database,
-        password: program.password,
-        port: program.port,
-    });
+    function connect() {
+        client = new Client({
+            user: program.user,
+            host: program.host,
+            database: program.database,
+            password: program.password,
+            port: program.port,
+        });
 
     client.connect()
 }
 
-program
+    function getSchemas(values) {
+        var list = values.split(',');
+        for(let l of list) {
+            schemas.push(l);
+        }
+    }
+
+    program
     .version('0.0.4')
     .description('Test data generation made easy')
-    .option('-u, --user <n>', 'Dababase user')
-    .option('-h, --host <h>', 'Host name')
-    .option('-d, --database <d>', 'Dababase name')
-    .option('-s, --password <d>', 'Password')
-    .option('-p, --port <p>', 'Port')
+    .option('-u, --user <n>', 'Dababase user' )
+    .option('-h, --host <h>', 'Host name' )
+    .option('-d, --database <d>', 'Dababase name' )
+    .option('-s, --password <d>', 'Password' )
+    .option('-p, --port <p>', 'Port' )
+    .option('-l, --list <items>', 'Schemas', getSchemas)
     .parse(process.argv);
 
 
