@@ -9,7 +9,7 @@ const figlet = require('figlet');
 var faker = require('faker');
 /* Settings Files Directory */
 let folderSettings = __dirname;
-
+faker.locale = "pt_BR";
 fileList = [];
 
 readFilePreset = function (f) {
