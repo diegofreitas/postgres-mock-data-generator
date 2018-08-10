@@ -44,7 +44,7 @@ function getModeList() {
     mode = [
         "1 - Interactive",
         "2 - Import Session",
-        "3 - Preset File"
+        "3 - Generate json data file"
     ]
     return mode;
 }
@@ -306,7 +306,7 @@ program
                         }else if (data.table == "2 - Import Session") {
                             loadSession.getFileList();
                         }
-                        else if (data.table == "3 - Preset File") {
+                        else if (data.table == "3 - Generate json data file") {
                             presetGenerate.getFileListPreset();
                         }
                     })
