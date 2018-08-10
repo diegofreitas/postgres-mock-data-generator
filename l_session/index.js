@@ -85,7 +85,8 @@ function generateInserts(tableName, options, count, file) {
         fs.mkdirSync(`l_session/sqls/${file}`);
       }
         fs.writeFile(`l_session/sqls/${file}/${new Date().toString()}-${file}.sql`, querys.join(';'), 'utf8', ()=>{
-        console.log('File saved')
+        console.log(`\n FILE CREATED SUCCESSFULLY `);
+        console.log(`\n path: l_session/sqls/${file}`);
 
     });
 

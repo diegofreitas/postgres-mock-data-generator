@@ -21,19 +21,23 @@ readFilePreset = function (f) {
             console.log(entinty);
             let results;
             results = entinty.match((/((\{{2}.+\}{2}))+/g));
-
-            parsedFile = `[${generateData(results, entinty,data, repeat)}]`;
-            fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', () => {
-                console.log('File saved');
+            parsedFile = `[${generateData(data, results, entinty, repeat)}]`;
+            if ( !fs.existsSync(`p_preset/files/${f}`)) {
+                fs.mkdirSync(`p_preset/files/${f}`);
+              }
+            fs.writeFile(`p_preset/files/${f}/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', () => {
+                console.log(parsedFile);
+                console.log(`\n FILE CREATED SUCCESSFULLY `);
+                console.log(`\n path: p_preset/files/${f}`);
             });
         })
 }
 
-generateData = function (array, ent,data, rep) {
+generateData = function (data,arrayMatch, ent, rep) {
     let chunk = '';
     for (let i = 0; i < repeat; i++) {
         ent = JSON.stringify((JSON.parse(data)).entity);
-        array.forEach((item) => {
+        arrayMatch.forEach((item) => {
             ent = ent.replace(item, faker.fake(item));
         })
         if (i > 0) {
