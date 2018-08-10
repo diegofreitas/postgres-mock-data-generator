@@ -14,32 +14,38 @@ fileList = [];
 
 readFilePreset = function (f) {
     var parsedFile = '';
-    var chunk ='';
     fs.readFile(folderSettings + '/' + f + '.json', 'utf-8',
         (err, data) => {
             let entinty = JSON.stringify((JSON.parse(data)).entity);
             repeat = (JSON.parse(data)).repeat;
             console.log(entinty);
             let results;
-            
             results = entinty.match((/((\{{2}.+\}{2}))+/g));
-            for(let i =0; i<repeat; i++){                    
-                    results.forEach((item) => {
-                        entinty = entinty.replace(item, faker.fake(item));
-                })
-                if(i>0){
-                    chunk += `,${entinty}`;
-                }else{
-                    chunk += `${entinty}`;
-                }
-            }
-            parsedFile = `[${chunk}]`;
+
+            parsedFile = `[${generateData(results, entinty,data, repeat)}]`;
             fs.writeFile(`p_preset/files/${new Date().toString()}-${f}.json`, parsedFile, 'utf8', () => {
-                console.log('File saved');           
+                console.log('File saved');
             });
         })
 }
 
+generateData = function (array, ent,data, rep) {
+    let chunk = '';
+    for (let i = 0; i < repeat; i++) {
+        ent = JSON.stringify((JSON.parse(data)).entity);
+        array.forEach((item) => {
+            ent = ent.replace(item, faker.fake(item));
+        })
+        if (i > 0) {
+            chunk += `,${ent}`;
+        } else {
+            chunk += `${ent}`;
+        }
+    }
+
+    return chunk;
+
+}
 getFileListPreset = function () {
     folderSettings = folderSettings + '/generator_settings';
     fs.readdir(folderSettings, (err, files) => {
